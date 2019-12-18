@@ -1,6 +1,36 @@
 # -----------------------------------------------
 
-# PupilPre 0.5.0
+# PupilPre 0.6.1
+
+This is a minor maintenance update.
+
+## Major changes:
+
+### New functions
+
+* None
+
+### Changes to functions
+
+* None
+
+### Vignettes
+
+* None
+
+## Minor changes:
+
+### Changes to functions
+
+* ppl_select_recorded_eye: This function has been changed to reflect the most recent version of SR DataViewer (4.1.1), which now labels EYE_TRACKED with "Binocular", rather than "Both". The updated code now allows for both types of input.  Thank you to Jesse Harris for bringing this to our attention.
+
+## Bug fixes:
+
+* None.
+
+# -----------------------------------------------
+
+# PupilPre 0.6.0
 
 ## Major changes:
 

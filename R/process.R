@@ -392,104 +392,106 @@ ppl_select_recorded_eye <- function(data, Recording = NULL, WhenLandR = NA) {
     lcol <- "LEFT_PUPIL_SIZE"
     rcol <- "RIGHT_PUPIL_SIZE"
 
-	{## SHARED CODE BEGINS HERE ##
+    {## SHARED CODE BEGINS HERE ##
 
-	  if("EYE_TRACKED" %in% names(data)) {
-	    message("Selecting gaze data using Data Viewer column EYE_TRACKED")
-	  } else {
-	    if(is.null(Recording)){
-	      stop("Please supply the recording eye(s)!")
-	    }
-	    message(paste("Selecting gaze data using Data Viewer columns", lcol, "and", rcol, "and the Recording argument:", Recording))
-	  }
+      if("EYE_TRACKED" %in% names(data)) {
+        message("Selecting gaze data using Data Viewer column EYE_TRACKED")
+      } else {
+        if(is.null(Recording)){
+          stop("Please supply the recording eye(s)!")
+        }
+        message(paste("Selecting gaze data using Data Viewer columns", lcol, "and", rcol, "and the Recording argument:", Recording))
+      }
 
-	  if("EYE_TRACKED" %in% names(data)) {
+      if("EYE_TRACKED" %in% names(data)) {
 
-	    if(("Both" %in% unique(data$EYE_TRACKED)) & is.na(WhenLandR)){
-	      stop("Please specify which eye to use when Recording is set to 'LandR'!")
-	    }
-	    tmp <- data %>%
-	      group_by(Event) %>%
-	      mutate(., EyeRecorded = as.character(EYE_TRACKED)) %>%
-	      do(
-	        mutate(., EyeSelected = ifelse(EyeRecorded == "Both" & WhenLandR == "Right", "Right",
-	                                       ifelse(EyeRecorded == "Both" & WhenLandR == "Left", "Left",
-	                                              ifelse(EyeRecorded == "Right", EyeRecorded,
-	                                                     ifelse(EyeRecorded == "Left", EyeRecorded, NA)))))
-	      )
+        # Previous versions of DataViewer output "Both", Newer versions (>=4.1.1) output "Binocular"
+        # The following code allows for both types of input
+        if(("Both" %in% unique(data$EYE_TRACKED) | "Binocular" %in% unique(data$EYE_TRACKED)) & is.na(WhenLandR)){
+          stop("Please specify which eye to use when Recording is set to 'LandR'!")
+        }
+        tmp <- data %>%
+          group_by(Event) %>%
+          mutate(., EyeRecorded = as.character(EYE_TRACKED)) %>%
+          do(
+            mutate(., EyeSelected = ifelse(EyeRecorded %in% c("Both", "Binocular") & WhenLandR == "Right", "Right",
+                                           ifelse(EyeRecorded %in% c("Both", "Binocular") & WhenLandR == "Left", "Left",
+                                                  ifelse(EyeRecorded == "Right", EyeRecorded,
+                                                         ifelse(EyeRecorded == "Left", EyeRecorded, NA)))))
+          )
 
-	  } else {
+      } else {
 
-	    # Prep columns for dplyr
-	    lcol <- enquo(lcol)
-	    rcol <- enquo(rcol)
+        # Prep columns for dplyr
+        lcol <- enquo(lcol)
+        rcol <- enquo(rcol)
 
-	    if (Recording == "LandR") {
+        if (Recording == "LandR") {
 
-	      if(is.na(WhenLandR)){
-	        stop("Please specify which eye to use when Recording is set to 'LandR'!")
-	      }
+          if(is.na(WhenLandR)){
+            stop("Please specify which eye to use when Recording is set to 'LandR'!")
+          }
 
-	      tmp <- data %>%
-	        group_by(Event) %>%
-	        mutate(., EyeRecorded = ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) > 0 &&
-	                                         sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) > 0, "Both",
-	                                       ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) > 0 &&
-	                                                sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) == 0, "Left",
-	                                              ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) == 0 &&
-	                                                       sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) > 0, "Right", "NoData")))) %>%
-	        do(
-	          mutate(., EyeSelected = ifelse(EyeRecorded == "Both" & WhenLandR == "Right", "Right",
-	                                         ifelse(EyeRecorded == "Both" & WhenLandR == "Left", "Left",
-	                                                ifelse(EyeRecorded == "Right", EyeRecorded,
-	                                                       ifelse(EyeRecorded == "Left", EyeRecorded,
-	                                                              ifelse(EyeRecorded == "NoData", "Neither"))))))
-	        )
-
-
-	    }
-
-	    if (Recording == "LorR") {
-
-	      tmp <- data %>%
-	        group_by(Event) %>%
-	        mutate(., EyeRecorded = ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) > 0 &
-	                                         sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) == 0, "Left",
-	                                       ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) == 0 &
-	                                                sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) > 0,
-	                                              "Right", "NoData"))) %>%
-	        do(
-	          mutate(., EyeSelected = ifelse(EyeRecorded == "Right", EyeRecorded,
-	                                         ifelse(EyeRecorded == "Left", EyeRecorded,
-	                                                ifelse(EyeRecorded == "NoData", "Neither"))))
-	        )
-
-	    }
-
-	    if (Recording == "R" | Recording == "L") {
-	      if (Recording == "R") {
-	        col <- rcol
-	        val <- "Right"
-	        val <- enquo(val)
-	      } else {
-	        col <- lcol
-	        val <- "Left"
-	        val <- enquo(val)
-	      }
-
-	      tmp <- data %>%
-	        group_by(Event) %>%
-	        mutate(., EyeRecorded = ifelse(sum(UQ(sym(eval_tidy(col))), na.rm = TRUE) > 0, quo_name(val), "NoData")) %>%
-	        do(
-	          mutate(., EyeSelected = ifelse(EyeRecorded == quo_name(val), EyeRecorded,
-	                                         ifelse(EyeRecorded == "NoData", "Neither")))
-	        ) %>% ungroup()
-	    }
+          tmp <- data %>%
+            group_by(Event) %>%
+            mutate(., EyeRecorded = ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) > 0 &&
+                                             sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) > 0, "Both",
+                                           ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) > 0 &&
+                                                    sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) == 0, "Left",
+                                                  ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) == 0 &&
+                                                           sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) > 0, "Right", "NoData")))) %>%
+            do(
+              mutate(., EyeSelected = ifelse(EyeRecorded == "Both" & WhenLandR == "Right", "Right",
+                                             ifelse(EyeRecorded == "Both" & WhenLandR == "Left", "Left",
+                                                    ifelse(EyeRecorded == "Right", EyeRecorded,
+                                                           ifelse(EyeRecorded == "Left", EyeRecorded,
+                                                                  ifelse(EyeRecorded == "NoData", "Neither"))))))
+            )
 
 
-	  }
+        }
 
-	} ## SHARED CODE ENDS HERE ##
+        if (Recording == "LorR") {
+
+          tmp <- data %>%
+            group_by(Event) %>%
+            mutate(., EyeRecorded = ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) > 0 &
+                                             sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) == 0, "Left",
+                                           ifelse(sum(UQ(sym(eval_tidy(lcol))), na.rm = TRUE) == 0 &
+                                                    sum(UQ(sym(eval_tidy(rcol))), na.rm = TRUE) > 0,
+                                                  "Right", "NoData"))) %>%
+            do(
+              mutate(., EyeSelected = ifelse(EyeRecorded == "Right", EyeRecorded,
+                                             ifelse(EyeRecorded == "Left", EyeRecorded,
+                                                    ifelse(EyeRecorded == "NoData", "Neither"))))
+            )
+
+        }
+
+        if (Recording == "R" | Recording == "L") {
+          if (Recording == "R") {
+            col <- rcol
+            val <- "Right"
+            val <- enquo(val)
+          } else {
+            col <- lcol
+            val <- "Left"
+            val <- enquo(val)
+          }
+
+          tmp <- data %>%
+            group_by(Event) %>%
+            mutate(., EyeRecorded = ifelse(sum(UQ(sym(eval_tidy(col))), na.rm = TRUE) > 0, quo_name(val), "NoData")) %>%
+            do(
+              mutate(., EyeSelected = ifelse(EyeRecorded == quo_name(val), EyeRecorded,
+                                             ifelse(EyeRecorded == "NoData", "Neither")))
+            ) %>% ungroup()
+        }
+
+
+      }
+
+    } ## SHARED CODE ENDS HERE ##
 
   # Transfer columns
     tmp <- tmp %>% group_by(Event) %>%

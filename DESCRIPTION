@@ -1,8 +1,8 @@
 Package: PupilPre
 Type: Package
 Title: Preprocessing Pupil Size Data
-Version: 0.6.0
-Date: 2019-08-04
+Version: 0.6.1
+Date: 2019-12-18
 Authors@R: c(person("Aki-Juhani", "Kyröläinen", role = c("aut", "cre"),
 		     email = "akkyro@gmail.com"),
 	      person("Vincent", "Porretta", role = "aut"),
@@ -35,6 +35,6 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 RoxygenNote: 6.1.1
 NeedsCompilation: no
-Packaged: 2019-08-04 19:21:51 UTC; vjp
+Packaged: 2019-12-18 19:05:13 UTC; vjp
 Repository: CRAN
-Date/Publication: 2019-08-06 09:10:05 UTC
+Date/Publication: 2019-12-18 19:30:06 UTC
