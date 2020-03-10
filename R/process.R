@@ -287,6 +287,7 @@ ppl_rm_extra_DVcols <- function(data, Keep=NULL){
       "RIGHT_INTEREST_AREA_DATA",
       "RIGHT_INTEREST_AREA_DISTANCE",
       "RIGHT_INTEREST_AREA_PIXEL_AREA",
+      "RIGHT_INTEREST_AREA_LABEL",
       "RIGHT_SACCADE_INDEX",
       "SAMPLE_BUTTON",
       "SAMPLE_INPUT",
@@ -305,50 +306,51 @@ ppl_rm_extra_DVcols <- function(data, Keep=NULL){
       "VIDEO_NAME"
     )
 
-  {## SHARED CODE BEGINS HERE ##
+    {## SHARED CODE BEGINS HERE ##
 
-    data <- ungroup(data)
+      data <- ungroup(data)
 
-    delcols <- data.frame(Column=SR_not_needed, Present=NA, Keep=NA)
+      delcols <- data.frame(Column=SR_not_needed, Present=NA, Keep=NA)
+      delcols$Column <- as.factor(delcols$Column)
 
-    message("Checking the data for extra (deletable) DV columns.")
+      message("Checking the data for extra (deletable) DV columns.")
 
-    for (x in 1:nrow(delcols)) {
-      if (!(delcols[x,1] %in% names(data))) {
-        delcols[x,2] <- 0
-        delcols[x,3] <- 0
-      }
-      else {
-        delcols[x,2] <- 1
-        if (delcols[x,1] %in% Keep) {
-          delcols[x,3] <- 1
-        } else {
+      for (x in 1:nrow(delcols)) {
+        if (!(delcols[x,1] %in% names(data))) {
+          delcols[x,2] <- 0
           delcols[x,3] <- 0
         }
+        else {
+          delcols[x,2] <- 1
+          if (delcols[x,1] %in% Keep) {
+            delcols[x,3] <- 1
+          } else {
+            delcols[x,3] <- 0
+          }
+        }
       }
-    }
 
-    deletecols <- filter(delcols, Present==1) %>% droplevels()
+      deletecols <- filter(delcols, Present==1) %>% droplevels()
 
-    if (nrow(deletecols) == 0) {
-      stop("No deletable columns present in the data.")
-    }
+      if (nrow(deletecols) == 0) {
+        stop("No deletable columns present in the data.")
+      }
 
-    if (!(is.null(Keep))) {
-      message("Checking for columns to keep...")
-    }
-    message("     Columns kept by request: ", paste(levels(droplevels(deletecols[deletecols$Keep==1,]$Column)), collapse = ", "))
-    deletecols <- filter(deletecols, Keep==0) %>% droplevels()
+      if (!(is.null(Keep))) {
+        message("Checking for columns to keep...")
+      }
+      message("     Columns kept by request: ", paste(levels(droplevels(deletecols[deletecols$Keep==1,]$Column)), collapse = ", "))
+      deletecols <- filter(deletecols, Keep==0) %>% droplevels()
 
-    del <- unique(levels(deletecols$Column))
+      del <- unique(levels(deletecols$Column))
 
-    message("Removing deletable columns...")
-    message("     Columns removed: ", paste(levels(deletecols$Column), collapse = ", "))
-    data <- select(data, -one_of(del))
+      message("Removing deletable columns...")
+      message("     Columns removed: ", paste(levels(deletecols$Column), collapse = ", "))
+      data <- select(data, -one_of(del))
 
-	return(droplevels(ungroup(data)))
+      return(droplevels(ungroup(data)))
 
-	} ## SHARED CODE ENDS HERE ##
+    } ## SHARED CODE ENDS HERE ##
 }
 
 
